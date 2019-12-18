@@ -17,8 +17,8 @@ from sklearn.linear_model import LogisticRegression
 
 # Data loading params
 tf.flags.DEFINE_float("dev_sample_percentage", .1, "Percentage of the training data to use for validation")
-tf.flags.DEFINE_string("positive_data_file", "/home/axp1147/Humor/the/positiveid.txt", "Data source for the positive data.")
-tf.flags.DEFINE_string("negative_data_file", "/home/axp1147/Humor/the/negativeid.txt", "Data source for the negative data.")
+tf.flags.DEFINE_string("positive_data_file", "/home/axp1147/Humor/Anotherbert/positiveid.txt", "Data source for the positive data.")
+tf.flags.DEFINE_string("negative_data_file", "/home/axp1147/Humor/Anotherbert/negativeid.txt", "Data source for the negative data.")
 
 # Model Hyperparameters
 tf.flags.DEFINE_integer("embedding_dim", 1024, "Dimensionality of character embedding (default: 128)")
@@ -30,14 +30,18 @@ tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularization lambda (default: 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
 tf.flags.DEFINE_integer("num_epochs", 200, "Number of training epochs (default: 200)")
-tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
+tf.flags.DEFINE_integer("evaluate_every", 10000, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
+accc = 0.0
+losss= 0.0
+los= 0.0
+acc = 0.0
 # Eval Parameters
-tf.flags.DEFINE_string("checkpoint_dir", "./runs/1459637919/checkpoints/", "Checkpoint directory from training run")
+tf.flags.DEFINE_string("checkpoint_dir", "./runs/1575513572/checkpoints/", "Checkpoint directory from training run")
 tf.flags.DEFINE_boolean("eval_train", False, "Evaluate on all training data")
 
 FLAGS = tf.flags.FLAGS
@@ -78,8 +82,9 @@ def preprocess():
     # Randomly shuffle data
     np.random.seed(10)
     shuffle_indices = np.random.permutation(np.arange(len(y)))
-    x_shuffled = x
-    y_shuffled = y    #np.random.shuffle(np.transpose(x_shuffled)) #Coloumn shuffle just to try permutation
+    x_shuffled = x[shuffle_indices]
+    y_shuffled = y[shuffle_indices]
+    #np.random.shuffle(np.transpose(x_shuffled)) #Coloumn shuffle just to try permutation
     x_shuffled, x_test, y_shuffled, y_test = train_test_split( x_shuffled , y_shuffled , test_size=0.25, random_state=42)
     
 
@@ -240,7 +245,7 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev):
                 if current_step % FLAGS.evaluate_every == 0:
                     with open(train_path, 'a') as trainfile:
                     	trainwriter = csv.writer(trainfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                    	trainwriter.writerow({current_step, float(losss/FLAGS.evaluate_every), float(accc/FLAGS.evaluate_every)} )
+                    	trainwriter.writerow({step, float(losss/FLAGS.evaluate_every), float(accuracy/FLAGS.evaluate_every)} )
                     	losss=0.0
                     	accc=0.0
                     print("\nEvaluation:")
@@ -291,16 +296,18 @@ def testing(x_test, y_test):
         print("Total number of test examples: {}".format(len(y_test)))
         print("Accuracy: {:g}".format(correct_predictions/float(len(y_test))))
     
+    np.save('file1', x_test)
+    np.save('file2', y_test)
+    np.save('file3', all_predictions)
     # Save the evaluation to a csv
     out_path = os.path.join(FLAGS.checkpoint_dir, "..", "prediction.csv")
     print("Saving evaluation to {0}".format(out_path))
     with open(out_path, 'w') as f:
-        csv.writer(f).writerows(correct_predictions/float(len(y_test)))
-
+        csv.writer(f).writerow({correct_predictions/float(len(y_test))})
 
 def main(argv=None):
     x_train, y_train, vocab_processor, x_dev, y_dev, x_test, y_test = preprocess()
-    train(x_train, y_train, vocab_processor, x_dev, y_dev)
+    #train(x_train, y_train, vocab_processor, x_dev, y_dev)
     testing(x_test,y_test)
     
     
