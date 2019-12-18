@@ -121,7 +121,7 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev):
 
             # Define Training procedure
             global_step = tf.Variable(0, name="global_step", trainable=False)
-            optimizer = tf.train.AdamOptimizer(1e-3)
+            optimizer = tf.train.AdamOptimizer(learning_rate= 0.05, epsilon= 1e-3)
             grads_and_vars = optimizer.compute_gradients(cnn.loss)
             train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
 
@@ -208,26 +208,6 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev):
                 if writer:
                     writer.add_summary(summaries, step)
                     
-                    
-            def tt_step(x_batch, y_batch, writer=None):
-                """
-                Evaluates model on a dev set
-                """
-                feed_dict = {
-                  cnn.input_x: x_batch,
-                  cnn.input_y: y_batch,
-                  cnn.dropout_keep_prob: 1.0
-                }
-                step, summaries, loss, accuracy = sess.run(
-                    [global_step, dev_summary_op, cnn.loss, cnn.accuracy],
-                    feed_dict)
-                time_str = datetime.datetime.now().isoformat()
-                print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
-                with open(train_path, 'a') as trainfile:
-                    trainwriter = csv.writer(trainfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                    trainwriter.writerow({step, loss, accuracy}  )
-                if writer:
-                    writer.add_summary(summaries, step)
             # Generate batches
             batches = data_helpers.batch_iter(
                 list(zip(x_train, y_train)), FLAGS.batch_size, FLAGS.num_epochs)
@@ -245,7 +225,7 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev):
                 if current_step % FLAGS.evaluate_every == 0:
                     with open(train_path, 'a') as trainfile:
                     	trainwriter = csv.writer(trainfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                    	trainwriter.writerow({step, float(losss/FLAGS.evaluate_every), float(accuracy/FLAGS.evaluate_every)} )
+                    	trainwriter.writerow({current_step, float(losss/FLAGS.evaluate_every), float(accc/FLAGS.evaluate_every)} )
                     	losss=0.0
                     	accc=0.0
                     print("\nEvaluation:")
@@ -307,7 +287,7 @@ def testing(x_test, y_test):
 
 def main(argv=None):
     x_train, y_train, vocab_processor, x_dev, y_dev, x_test, y_test = preprocess()
-    #train(x_train, y_train, vocab_processor, x_dev, y_dev)
+    train(x_train, y_train, vocab_processor, x_dev, y_dev)
     testing(x_test,y_test)
     
     
