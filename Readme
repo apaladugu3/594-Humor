@@ -10,7 +10,7 @@ make sure that in the above command layers is always -1.
 
 Create a new folder as where you want to store data as specified in the paths you chose
 
-Run final_cleansing.py and specify inputs as if the data is positive or negative and then name of the file with the bert vector embeddings
+Run final_cleansing.py and final_positive.py and specify inputs as if the data is positive or negative and then name of the file with the bert vector embeddings
 
 Remove positiveid, negativeid, vocabcnn and then run vocab_generator.py
 
